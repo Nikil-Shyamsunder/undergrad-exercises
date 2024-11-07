@@ -1,14 +1,20 @@
+use std::vec;
+
 /// Holds information about which tile is in which position.
 /// Should be fairly compact and easy to copy.
 #[derive(Debug, Clone)]
 pub struct GameState {
-    // TODO
+    board: Vec<Vec<Option<u8>>>
 }
 
 /// Creates the default position of tiles, starting with 1 in the top left corner.
 impl Default for GameState {
     fn default() -> Self {
-        todo!()
+        let x = vec![vec![Some(1), Some(2), Some(3), Some(4)],
+            vec![Some(5), Some(6), Some(7), Some(8)],
+            vec![Some(9), Some(10), Some(11), Some(12)],
+            vec![Some(13), Some(14), Some(15), None]];
+        return Self{board : x};
     }
 }
 
@@ -37,7 +43,7 @@ impl GameState {
 
     /// Returns the tile at position x,y.
     pub fn get(&self, x: u8, y: u8) -> Option<u8> {
-        todo!()
+        *self.board.get(y as usize).unwrap().get(x as usize).unwrap()
     }
 
     /// Returns false if there is a duplicate tile in this game state.
