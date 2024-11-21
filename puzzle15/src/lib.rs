@@ -178,7 +178,7 @@ pub fn find_shortest_path(from: GameState, to: GameState) -> Vec<Move> {
     let mut paths: Vec::<Vec<Move>> = vec![];
     paths.push(vec![]);
 
-    for _i in 1..=6 { // paths cannot be longer than length 6
+    for _i in 1..=1000 { // paths cannot be longer than length 6
         let mut new_paths: Vec::<Vec<Move>> = vec![];
         for path in paths {
             for mv in vec![Move::LeftToRight, Move::RightToLeft, Move::TopToBottom, Move::BottomToTop] {
@@ -281,12 +281,10 @@ mod tests {
         assert_eq!(state.get(2, 3), None);
         assert_eq!(state.get(3, 3), Some(15));
 
-        //
         state.swap(0, 0, 2, 2);
         assert!(state.all_tiles_unique());
         assert_eq!(state.get(0, 0), Some(11));
 
-        // TODO: add more tests
     }
 
     #[test]
@@ -301,46 +299,88 @@ mod tests {
         assert!(state.perform_move(Move::LeftToRight));
         assert_eq!(state.get(3, 2), Some(11));
         assert_eq!(state.get(2, 2), None);
-
-        // TODO: add more tests
+        state.perform_move(Move::LeftToRight);
+        assert_eq!(state.get(2, 2), Some(10));
+        assert_eq!(state.get(1, 2), None);
     }
 
     #[test]
     fn test_game_state_equality() {
-        let mut state = GameState::default();
-        assert!(!state.perform_move(Move::BottomToTop));
-        assert_eq!(state, GameState::default());
-        assert!(state.perform_move(Move::TopToBottom));
-        let mut state_2 = GameState::default();
-        state_2.set(3, 3, Some(12));
-        state_2.set(3, 2, None);
-        assert_eq!(state, state_2);
-
-        // TODO: add more tests
+        {
+            let mut state = GameState::default();
+            assert!(!state.perform_move(Move::BottomToTop));
+            assert_eq!(state, GameState::default());
+            assert!(state.perform_move(Move::TopToBottom));
+            let mut state_2 = GameState::default();
+            state_2.set(3, 3, Some(12));
+            state_2.set(3, 2, None);
+            assert_eq!(state, state_2);
+        }
+  
+        {
+            let mut state = GameState::default();
+            assert!(state.perform_move(Move::LeftToRight));
+            assert!(state.perform_move(Move::RightToLeft));
+            let state_2 = GameState::default();
+            assert_eq!(state, state_2);
+        }
     }
 
     #[test]
     fn test_perform_moves() {
-        let mut state = GameState::default();
-        assert_eq!(
-            state.perform_moves(&[Move::RightToLeft, Move::BottomToTop, Move::TopToBottom]),
-            1
-        );
+        { 
+            let mut state = GameState::default();
+            assert_eq!(
+                state.perform_moves(&[Move::RightToLeft, Move::BottomToTop, Move::TopToBottom]),
+                1
+            );
 
-        let mut state = GameState::default();
-        assert_eq!(
-            state.perform_moves(&[Move::TopToBottom, Move::TopToBottom, Move::TopToBottom]),
-            3
-        );
-        let expected = "\
+            let mut state = GameState::default();
+            assert_eq!(
+                state.perform_moves(&[Move::TopToBottom, Move::TopToBottom, Move::TopToBottom]),
+                3
+            );
+            let expected = "\
 |  1 |  2 |  3 |    |
 |  5 |  6 |  7 |  4 |
 |  9 | 10 | 11 |  8 |
 | 13 | 14 | 15 | 12 |
 ";
-        assert_eq!(expected, format!("{state}"));
+            assert_eq!(expected, format!("{state}"));
 
-        // TODO: add more tests
+        }
+
+        { 
+            let mut state = GameState::default();
+            assert_eq!(
+                state.perform_moves(&[Move::LeftToRight, Move::LeftToRight, Move::LeftToRight]),
+                3
+            );
+            let expected = "\
+|  1 |  2 |  3 |  4 |
+|  5 |  6 |  7 |  8 |
+|  9 | 10 | 11 | 12 |
+|    | 13 | 14 | 15 |
+";
+            assert_eq!(expected, format!("{state}"));
+
+        }
+
+        { 
+            let mut state = GameState::default();
+            assert_eq!(
+                state.perform_moves(&[Move::LeftToRight, Move::RightToLeft, Move::LeftToRight]),
+                3
+            );
+            let expected = "\
+|  1 |  2 |  3 |  4 |
+|  5 |  6 |  7 |  8 |
+|  9 | 10 | 11 | 12 |
+| 13 | 14 |    | 15 |
+";
+            assert_eq!(expected, format!("{state}"));
+
+        }
     }
 
     #[test]
@@ -399,14 +439,38 @@ mod tests {
 
     #[test]
     fn test_find_shortest_path() {
-        let expected_moves = [Move::TopToBottom, Move::TopToBottom, Move::TopToBottom];
-        let mut state = GameState::default();
-        assert_eq!(state.perform_moves(&expected_moves), 3);
+        // Test 1: simple path up the board
+        {
+            let expected_moves = [Move::TopToBottom, Move::TopToBottom, Move::TopToBottom];
+            let mut state = GameState::default();
+            assert_eq!(state.perform_moves(&expected_moves), 3);
 
-        let actual_moves = find_shortest_path(GameState::default(), state);
-        assert_eq!(actual_moves.len(), 3);
-        assert_eq!(actual_moves, expected_moves);
+            let actual_moves = find_shortest_path(GameState::default(), state);
+            assert_eq!(actual_moves.len(), 3);
+            assert_eq!(actual_moves, expected_moves);
+        }
 
-        // TODO: add more tests
+        // Test 2: rotation
+        {
+            let expected_moves = [Move::TopToBottom, Move::LeftToRight, Move::BottomToTop];
+            let mut state = GameState::default();
+            assert_eq!(state.perform_moves(&expected_moves), 3);
+
+            let actual_moves = find_shortest_path(GameState::default(), state);
+            assert_eq!(actual_moves.len(), 3);
+            assert_eq!(actual_moves, expected_moves);
+        }
+
+        // Test 3: longer path
+        {
+            let expected_moves = [Move::TopToBottom, Move::LeftToRight, Move::LeftToRight, Move::LeftToRight, Move::TopToBottom];
+            let mut state = GameState::default();
+            assert_eq!(state.perform_moves(&expected_moves), 5);
+
+            let actual_moves = find_shortest_path(GameState::default(), state);
+            assert_eq!(actual_moves.len(), 5);
+            assert_eq!(actual_moves, expected_moves);
+        }
+
     }
 }
