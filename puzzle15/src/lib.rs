@@ -133,66 +133,39 @@ impl GameState {
         return count;
     }
 
-    // transposes a matrix
-    fn transpose(matrix: Vec<Vec<Option<u8>>>) -> Vec<Vec<Option<u8>>> {
-        if matrix.is_empty() {
-            return vec![];
-        }
-        
-        let num_rows = matrix.len();
-        let num_cols = matrix[0].len();
-        
-        // Initialize a new matrix with dimensions swapped
-        let mut transposed = vec![vec![None; num_rows]; num_cols];
-        
-        for (i, row) in matrix.into_iter().enumerate() {
-            for (j, elem) in row.into_iter().enumerate() {
-                transposed[j][i] = elem;
-            }
-        }
-        
-        transposed
-    }
-
     /// Tries to parse a game state from the provided string.
     /// Returns None if parsing is not possible, or if the parsed game state would contain
     /// duplicate or invalid tiles.
     /// Ignores whitespace.
     pub fn from_str(s: &str) -> Option<Self> {
-        // let parts = s.split("\n").map(|x| x.split("| ").map(|x2| x2.trim()).collect::<Vec<&str>>()).collect::<Vec<Vec<&str>>>();
-        // println!("{:?}", parts);
-        
-        let v = s
-            .split("\n")
+        let mut matrix = vec![vec![None; 4]; 4]; // Initialize a 4x4 matrix of None
+
+        // Split the input into lines
+        let rows: Vec<&str> = s
+            .lines()
             .map(str::trim)
-            .filter(|l| !l.is_empty())
-            .map(|line| line.split("|").map(str::trim).collect::<Vec<&str>>())
-            .map(|elems| elems[1..5].to_vec()) 
-            .map(|elems| {
-                elems
-                    .into_iter()
-                    .map(|e| {
-                        if e.is_empty() {
-                            None
-                        } else {
-                            Some(
-                                match e.parse::<u8>() {
-                                    Ok(x) => x,
-                                    Err(e) => return None,
-                                }
-                            )
-                        }
-                    })
-                    .collect::<Vec<Option<u8>>>()
-            })
-            .collect::<Vec<Vec<Option<u8>>>>();
-        
+            .filter(|line| !line.is_empty())
+            .collect();
+    
+        // Iterate through each row
+        for (row_index, row) in rows.iter().enumerate() {
+            let elements: Vec<&str> = row.split('|').map(str::trim).collect();
+            for col_index in 0..4 {
+                let element = elements[col_index + 1]; // Skip the first '|' character
+                if element.is_empty() {
+                    matrix[col_index][row_index] = None; // Empty slot
+                } else {
+                    match element.parse::<u8>() {
+                        Ok(value) => matrix[col_index][row_index] = Some(value),
+                        Err(_) => return None,
+                    }
+                }
+            }
+        }    
 
-
-        // check dims 
-        // if matrix.len() == 4 && matrix.iter().all(|row| row.len() == 4)
-        let state = GameState{board: GameState::transpose(v)};
-        println!("{:?}, Unique: {}", state.board, GameState::all_tiles_unique(&state));
+        let state = GameState{board: matrix};
+        println!("{:?}", state.board);
+        // println!("{:?}, Unique: {}", state.board, GameState::all_tiles_unique(&state));
         if GameState::all_tiles_unique(&state) {Some(state)} else {None}
     }
 }
@@ -388,9 +361,10 @@ mod tests {
 |  9 | 10 | 11 |  8 |
 | 13 | 14 | 15 | 12 |
 ";
+        println!("Done correct.");
         assert!(GameState::from_str(wrong0).is_none());
         assert!(GameState::from_str(wrong1).is_none());
-        assert!(GameState::from_str(wrong1).is_none());
+        assert!(GameState::from_str(wrong2).is_none());
         assert!(GameState::from_str(wrong3).is_none());
         assert!(GameState::from_str(wrong4).is_none());
         assert!(GameState::from_str(wrong5).is_none());
