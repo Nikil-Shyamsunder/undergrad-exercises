@@ -175,7 +175,31 @@ impl GameState {
 /// Finds the minimal number of moves needed to get from one state to the other.
 /// Might run forever if there is no path, so use with caution!
 pub fn find_shortest_path(from: GameState, to: GameState) -> Vec<Move> {
-    todo!()
+    let mut paths: Vec::<Vec<Move>> = vec![];
+    paths.push(vec![]);
+
+    for _i in 1..=6 { // paths cannot be longer than length 6
+        let mut new_paths: Vec::<Vec<Move>> = vec![];
+        for path in paths {
+            for mv in vec![Move::LeftToRight, Move::RightToLeft, Move::TopToBottom, Move::BottomToTop] {
+                let mut curr_state = from.clone();
+                curr_state.perform_moves(&path);
+                let mut new_path = path.clone(); 
+
+                if curr_state.perform_move(mv) {      
+                    new_path.push(mv); 
+                    new_paths.push(new_path.clone()); 
+                }
+
+                if curr_state == to { return new_path; }
+            };
+        };
+
+        paths = new_paths;
+        // println!("Paths for i = {}\n{:?}", i, paths);
+    };  
+
+    panic!("Did not find any valid path of any valid length");
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
