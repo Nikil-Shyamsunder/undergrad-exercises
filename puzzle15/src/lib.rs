@@ -1,4 +1,6 @@
 use std::vec;
+use std::collections::HashMap;
+use std::time::Instant;
 
 /// Holds information about which tile is in which position.
 /// Should be fairly compact and easy to copy.
@@ -74,14 +76,14 @@ impl GameState {
             for j in 0..4 {
                 match self.board[i][j] {
                     Some (x) => 
-                        if (x > 15 || x < 1) {
+                        if x > 15 || x < 1 {
                             return false; // Invalid Board: Certain numbers out of range.
                         }
-                        else if (tile_tracker[(x) as usize] >= 1) {return false} // there is a duplicate
+                        else if tile_tracker[(x) as usize] >= 1 {return false} // there is a duplicate
                         else {tile_tracker[(x) as usize] = 1;} // this is a number we haven't seen before; there is not a duplicate so far
                     ,
                     None => {
-                        if (tile_tracker[0] >= 1) {return false} // there is a duplicate
+                        if tile_tracker[0] >= 1 {return false} // there is a duplicate
                         else {tile_tracker[0] = 1;} // this is a number we haven't seen before; there is not a duplicate so far
                     },
                 }
@@ -95,7 +97,7 @@ impl GameState {
     fn empty_loc(&mut self) -> (u8, u8) {
         for i in 0..4 {
             for j in 0..4 {
-                if (self.board[i][j] == None) { return (i as u8, j as u8) } 
+                if self.board[i][j] == None { return (i as u8, j as u8) } 
             }
         }
         panic!("Invalid Board: There are no empty positions on the board.")
@@ -116,10 +118,10 @@ impl GameState {
     pub fn perform_move(&mut self, m: Move) -> bool {
         let (x, y) = self.empty_loc();
         match m {
-            Move::LeftToRight => if ( x == 0 ) { false } else { self.swap(x, y, x - 1, y); true}
-            Move::RightToLeft => if ( x == 3 ) { false } else { self.swap(x, y, x + 1, y); true}
-            Move::BottomToTop => if ( y == 3 ) { false } else { self.swap(x, y, x, y + 1); true}
-            Move::TopToBottom => if ( y == 0 ) { false } else { self.swap(x, y, x, y - 1); true}
+            Move::LeftToRight => if  x == 0  { false } else { self.swap(x, y, x - 1, y); true}
+            Move::RightToLeft => if  x == 3  { false } else { self.swap(x, y, x + 1, y); true}
+            Move::BottomToTop => if  y == 3  { false } else { self.swap(x, y, x, y + 1); true}
+            Move::TopToBottom => if  y == 0  { false } else { self.swap(x, y, x, y - 1); true}
         }
     }
 
@@ -178,7 +180,10 @@ pub fn find_shortest_path(from: GameState, to: GameState) -> Vec<Move> {
     let mut paths: Vec::<Vec<Move>> = vec![];
     paths.push(vec![]);
 
-    for _i in 1..=1000 { // paths cannot be longer than length 6
+    // states are keys and values are the shortest paths to reach that state
+    let mut states_discovered: HashMap<Vec<Vec<Option<u8>>>, bool> = HashMap::new(); 
+
+    for _i in 1..=1000 { 
         let mut new_paths: Vec::<Vec<Move>> = vec![];
         for path in paths {
             for mv in vec![Move::LeftToRight, Move::RightToLeft, Move::TopToBottom, Move::BottomToTop] {
@@ -186,9 +191,20 @@ pub fn find_shortest_path(from: GameState, to: GameState) -> Vec<Move> {
                 curr_state.perform_moves(&path);
                 let mut new_path = path.clone(); 
 
-                if curr_state.perform_move(mv) {      
-                    new_path.push(mv); 
-                    new_paths.push(new_path.clone()); 
+                if curr_state.perform_move(mv) {     
+                    if states_discovered.contains_key(&curr_state.board) {
+                        // ignore this move since we've already reached it once
+                    }
+                    else {
+                        // add this state to our hashmap
+                        states_discovered.insert(curr_state.board.clone(), true);
+
+                        // add this path to our new paths
+                        new_path.push(mv); 
+                        new_paths.push(new_path.clone()); 
+                    }
+
+                    
                 }
 
                 if curr_state == to { return new_path; }
