@@ -148,8 +148,10 @@ impl GameState {
             .collect();
     
         // Iterate through each row
+        if rows.len() != 4 { return None }; // invalid # of rows
         for (row_index, row) in rows.iter().enumerate() {
             let elements: Vec<&str> = row.split('|').map(str::trim).collect();
+            if elements.len() != 6 { return None }; // there is not the proper number of '|'s / invalid # of cols
             for col_index in 0..4 {
                 let element = elements[col_index + 1]; // Skip the first '|' character
                 if element.is_empty() {
@@ -164,7 +166,7 @@ impl GameState {
         }    
 
         let state = GameState{board: matrix};
-        println!("{:?}", state.board);
+        // println!("{:?}", state.board);
         // println!("{:?}, Unique: {}", state.board, GameState::all_tiles_unique(&state));
         if GameState::all_tiles_unique(&state) {Some(state)} else {None}
     }
@@ -361,7 +363,6 @@ mod tests {
 |  9 | 10 | 11 |  8 |
 | 13 | 14 | 15 | 12 |
 ";
-        println!("Done correct.");
         assert!(GameState::from_str(wrong0).is_none());
         assert!(GameState::from_str(wrong1).is_none());
         assert!(GameState::from_str(wrong2).is_none());
