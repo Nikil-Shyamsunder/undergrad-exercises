@@ -3,4 +3,10 @@ name = "puzzle15"
 version = "0.1.0"
 edition = "2021"
 
-[dependencies]
+[dev-dependencies]
+criterion = "0.4"
+
+[[bench]]
+name = "find_shortest_path"
+harness = false
+
